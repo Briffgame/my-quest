@@ -80,4 +80,133 @@
         /* Окно поздравления */
         #overlay {
             display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.98); border-radius: 22
+            background: rgba(15, 23, 42, 0.98); border-radius: 22px;
+            flex-direction: column; justify-content: center; align-items: center; padding: 25px;
+            z-index: 10; box-sizing: border-box; border: 2px solid #10b981;
+        }
+        #overlay h3 { color: #10b981; margin-bottom: 15px; font-size: 22px; }
+        #overlay p { font-style: italic; line-height: 1.5; font-size: 16px; }
+
+        /* Кнопка сброса внизу */
+        .reset-btn {
+            background: none; 
+            color: #475569; 
+            font-size: 10px; 
+            border: 1px solid #334155; 
+            margin-top: 20px;
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div id="overlay">
+        <h3>🏆 ДЕНЬ ЗАВЕРШЕН!</h3>
+        <p id="congrats-text"></p>
+        <button onclick="document.getElementById('overlay').style.display='none'" style="margin-top:25px; background:#10b981; color:white; width: 100%;">ВПЕРЁД!</button>
+    </div>
+
+    <div class="info">НЕДЕЛЯ <span id="week-num">1</span></div>
+    <div class="avatar"><img id="pic" src="lvl1.png"></div>
+    <h2 id="name">Загрузка...</h2>
+    <div class="info">Общий XP: <span id="xp">0</span> / <span id="next">500</span></div>
+    <div class="bar-bg"><div id="bar-fill"></div></div>
+    
+    <div id="task-list"></div>
+
+    <div style="margin-top: 20px; border-top: 1px solid #334155; padding-top: 10px;">
+        <button class="reset-btn" onclick="if(confirm('Сбросить весь прогресс?')) { localStorage.clear(); location.reload(); }">СБРОСИТЬ ВСЁ</button>
+    </div>
+</div>
+
+<script>
+    let state = JSON.parse(localStorage.getItem('rpg_weekly_v3')) || { 
+        xp: 0, 
+        completedToday: [] 
+    };
+
+    const today = new Date().toDateString();
+    const lastDate = localStorage.getItem('rpg_last_date');
+    if (lastDate !== today) {
+        state.completedToday = [];
+        localStorage.setItem('rpg_last_date', today);
+    }
+
+    // Твои мотивашки с учетом планов на Вьетнам
+    const quotes = [
+        "Саша, сегодня ты отыграл свою роль на 10/10! Все квесты закрыты.",
+        "Вьетнамский вайб всё ближе! Дисциплина — твой билет в долгое путешествие.",
+        "Твой контент на сегодня идеален. Зрители и организм в восторге!",
+        "Легендарная работа! Ты на шаг ближе к 50к подписчиков.",
+        "Мастер церемоний в деле: сегодня ты управлял своей жизнью как профи!",
+        "Чистая победа! Оля точно оценит твою целеустремленность.",
+        "Уровень дисциплины: ТИТАН. Вьетнам ждет подготовленного героя!"
+    ];
+
+    const levels = [
+        { xp: 0,    name: "Новичок (Неделя 1)", img: "lvl1.png", week: 1, target: 500 },
+        { xp: 500,  name: "Исследователь (Неделя 2)", img: "lvl2.png", week: 2, target: 1000 },
+        { xp: 1000, name: "Воин (Неделя 3)", img: "lvl3.png", week: 3, target: 1500 },
+        { xp: 1500, name: "Титан (Неделя 4)", img: "lvl4.png", week: 4, target: 2000 }
+    ];
+
+    const tasks = [
+        { id: 't1', txt: "💧 Вода перед едой", pts: 10 },
+        { id: 't2', txt: "🤸‍♂️ Разминка 5 мин", pts: 15 },
+        { id: 't3', txt: "🎧 Прогулка 15 мин", pts: 25 },
+        { id: 't4', txt: "🥗 Овощи в тарелке", pts: 20 }
+    ];
+
+    function render() {
+        const stage = [...levels].reverse().find(l => state.xp >= l.xp) || levels[0];
+        const nextStage = levels.find(l => l.xp > state.xp) || { xp: state.xp + 500 };
+        
+        document.getElementById('pic').src = stage.img;
+        document.getElementById('name').innerText = stage.name;
+        document.getElementById('week-num').innerText = stage.week;
+        document.getElementById('xp').innerText = state.xp;
+        document.getElementById('next').innerText = nextStage.xp;
+        
+        let progress = (state.xp / nextStage.xp) * 100;
+        document.getElementById('bar-fill').style.width = Math.min(100, progress) + '%';
+        
+        localStorage.setItem('rpg_weekly_v3', JSON.stringify(state));
+        renderTasks();
+    }
+
+    function renderTasks() {
+        const list = document.getElementById('task-list');
+        list.innerHTML = '';
+        tasks.forEach(t => {
+            const isDone = state.completedToday.includes(t.id);
+            const item = document.createElement('div');
+            item.className = 'task';
+            item.innerHTML = `
+                <span>${t.txt}</span>
+                <button ${isDone ? 'disabled' : ''} onclick="doTask('${t.id}', ${t.pts})">
+                    ${isDone ? '✓' : '+' + t.pts}
+                </button>
+            `;
+            list.appendChild(item);
+        });
+    }
+
+    function doTask(id, pts) {
+        if (state.completedToday.includes(id)) return;
+        state.xp += pts;
+        state.completedToday.push(id);
+        render();
+
+        if (state.completedToday.length === tasks.length) {
+            const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+            document.getElementById('congrats-text').innerText = randomQuote;
+            document.getElementById('overlay').style.display = 'flex';
+        }
+    }
+
+    render();
+</script>
+
+</body>
+</html>
