@@ -2,19 +2,20 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>RPG Habit Tracker: Weekly</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RPG Habit Tracker</title>
     <style>
-        body { background: #0f172a; color: white; font-family: -apple-system, BlinkMacSystemFont, sans-serif; display: flex; justify-content: center; padding: 20px; }
-        .card { background: #1e293b; padding: 25px; border-radius: 24px; width: 380px; text-align: center; border: 2px solid #38bdf8; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
-        .avatar { width: 180px; height: 180px; margin: 0 auto 15px; border-radius: 20px; overflow: hidden; background: #334155; border: 3px solid #38bdf8; }
+        body { background: #0f172a; color: white; font-family: -apple-system, system-ui, sans-serif; display: flex; justify-content: center; padding: 15px; margin: 0; }
+        .card { background: #1e293b; padding: 20px; border-radius: 24px; width: 100%; max-width: 380px; text-align: center; border: 2px solid #38bdf8; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .avatar { width: 160px; height: 160px; margin: 0 auto 15px; border-radius: 20px; overflow: hidden; background: #334155; border: 3px solid #38bdf8; }
         img { width: 100%; height: 100%; object-fit: cover; }
         .bar-bg { background: #334155; height: 12px; border-radius: 6px; margin: 15px 0; overflow: hidden; }
-        #bar-fill { background: #38bdf8; height: 100%; width: 0%; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
-        .task { background: #1e293b; padding: 14px; margin: 10px 0; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; }
-        button { background: #38bdf8; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; color: #0f172a; }
-        button:disabled { background: #10b981; color: white; cursor: default; }
-        .info { font-size: 13px; color: #94a3b8; margin-bottom: 5px; }
-        h2 { margin: 5px 0; font-size: 22px; }
+        #bar-fill { background: #38bdf8; height: 100%; width: 0%; transition: 0.8s ease-out; }
+        .task { background: #1e293b; padding: 12px; margin: 10px 0; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; -webkit-tap-highlight-color: transparent; }
+        button { background: #38bdf8; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; color: #0f172a; font-size: 14px; }
+        button:disabled { background: #10b981; color: white; opacity: 0.8; }
+        .info { font-size: 12px; color: #94a3b8; }
+        h2 { margin: 5px 0; font-size: 20px; }
     </style>
 </head>
 <body>
@@ -23,32 +24,25 @@
     <div class="info">НЕДЕЛЯ <span id="week-num">1</span></div>
     <div class="avatar"><img id="pic" src="lvl1.png"></div>
     <h2 id="name">Загрузка...</h2>
-    <div class="info">Общий XP: <span id="xp">0</span> / <span id="next">500</span></div>
+    <div class="info">XP: <span id="xp">0</span> / <span id="next">500</span></div>
     <div class="bar-bg"><div id="bar-fill"></div></div>
     
     <div id="task-list"></div>
 
-    <div style="margin-top: 25px; border-top: 1px solid #334155; padding-top: 15px;">
-        <button onclick="if(confirm('Сбросить весь прогресс?')) { localStorage.clear(); location.reload(); }" style="background:none; color:#64748b; font-size:10px; border:1px solid #475569;">СБРОСИТЬ ВСЁ</button>
+    <div style="margin-top: 20px; opacity: 0.3;">
+        <button onclick="if(confirm('Сбросить?')) { localStorage.clear(); location.reload(); }" style="background:none; color:white; font-size:9px;">СБРОС ДАННЫХ</button>
     </div>
 </div>
 
 <script>
-    // Загрузка данных или создание новых
-    let state = JSON.parse(localStorage.getItem('rpg_weekly_v3')) || { 
-        xp: 0, 
-        completedToday: [] // Список ID задач, выполненных СЕГОДНЯ
-    };
+    let state = JSON.parse(localStorage.getItem('rpg_mobile_v1')) || { xp: 0, completedToday: [] };
 
-    // Проверка смены дня (чтобы разблокировать кнопки)
     const today = new Date().toDateString();
-    const lastDate = localStorage.getItem('rpg_last_date');
-    if (lastDate !== today) {
-        state.completedToday = []; // Наступил новый день, очищаем список выполненных
-        localStorage.setItem('rpg_last_date', today);
+    if (localStorage.getItem('last_day') !== today) {
+        state.completedToday = [];
+        localStorage.setItem('last_day', today);
     }
 
-    // Уровни (пороги XP теперь рассчитаны на недели)
     const levels = [
         { xp: 0,    name: "Новичок (Неделя 1)", img: "lvl1.png", week: 1, target: 500 },
         { xp: 500,  name: "Исследователь (Неделя 2)", img: "lvl2.png", week: 2, target: 1000 },
@@ -57,30 +51,24 @@
     ];
 
     const tasks = [
-        { id: 't1', txt: "💧 Вода перед едой", pts: 10 },
-        { id: 't2', txt: "🤸‍♂️ Разминка 5 мин", pts: 15 },
-        { id: 't3', txt: "🎧 Прогулка 15 мин", pts: 25 },
-        { id: 't4', txt: "🥗 Овощи в тарелке", pts: 20 }
+        { id: 't1', txt: "💧 Вода", pts: 10 },
+        { id: 't2', txt: "🤸‍♂️ Разминка", pts: 15 },
+        { id: 't3', txt: "🎧 Прогулка", pts: 25 },
+        { id: 't4', txt: "🥗 Овощи", pts: 20 }
     ];
 
     function render() {
         const stage = [...levels].reverse().find(l => state.xp >= l.xp) || levels[0];
-        const nextStage = levels.find(l => l.xp > state.xp) || { xp: state.xp + 500 };
+        const next = levels.find(l => l.xp > state.xp) || { xp: state.xp + 500 };
         
         document.getElementById('pic').src = stage.img;
         document.getElementById('name').innerText = stage.name;
         document.getElementById('week-num').innerText = stage.week;
         document.getElementById('xp').innerText = state.xp;
-        document.getElementById('next').innerText = nextStage.xp;
+        document.getElementById('next').innerText = next.xp;
+        document.getElementById('bar-fill').style.width = Math.min(100, (state.xp / next.xp) * 100) + '%';
         
-        // Полоска прогресса
-        let progress = (state.xp / nextStage.xp) * 100;
-        document.getElementById('bar-fill').style.width = Math.min(100, progress) + '%';
-        
-        // Сохраняем состояние
-        localStorage.setItem('rpg_weekly_v3', JSON.stringify(state));
-        
-        // Обновляем список задач
+        localStorage.setItem('rpg_mobile_v1', JSON.stringify(state));
         renderTasks();
     }
 
@@ -94,7 +82,7 @@
             item.innerHTML = `
                 <span>${t.txt}</span>
                 <button ${isDone ? 'disabled' : ''} onclick="doTask('${t.id}', ${t.pts})">
-                    ${isDone ? '✓ Готово' : '+' + t.pts + ' XP'}
+                    ${isDone ? '✓' : '+' + t.pts}
                 </button>
             `;
             list.appendChild(item);
@@ -102,6 +90,9 @@
     }
 
     function doTask(id, pts) {
+        // Виброотклик (Haptic Feedback)
+        if (window.navigator.vibrate) window.navigator.vibrate(50);
+        
         state.xp += pts;
         state.completedToday.push(id);
         render();
