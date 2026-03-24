@@ -1,52 +1,3 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RPG Habit Tracker</title>
-    
-    <link rel="apple-touch-icon" href="icon.png">
-    <link rel="icon" type="image/png" href="icon.png">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪖</text></svg>">
-
-    <style>
-        body { background: #0f172a; color: white; font-family: sans-serif; display: flex; justify-content: center; padding: 15px; margin: 0; min-height: 100vh; }
-        .card { background: #1e293b; padding: 20px; border-radius: 24px; width: 100%; max-width: 380px; text-align: center; border: 2px solid #38bdf8; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; box-sizing: border-box; }
-        .avatar { width: 160px; height: 160px; margin: 0 auto 15px; border-radius: 20px; overflow: hidden; background: #334155; border: 3px solid #38bdf8; display: flex; align-items: center; justify-content: center; }
-        #pic { width: 100%; height: 100%; object-fit: cover; }
-        .bar-bg { background: #334155; height: 14px; border-radius: 7px; margin: 15px 0; overflow: hidden; }
-        #bar-fill { background: #38bdf8; height: 100%; width: 0%; transition: 0.8s ease; }
-        .task { background: #1e293b; padding: 16px; margin: 10px 0; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; text-align: left; }
-        button { background: #38bdf8; border: none; padding: 12px 18px; border-radius: 12px; font-weight: bold; cursor: pointer; color: #0f172a; font-size: 14px; }
-        button:disabled { background: #10b981; color: white; cursor: default; }
-        .info { font-size: 13px; color: #94a3b8; }
-        h2 { margin: 5px 0; font-size: 20px; }
-        #overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.98); border-radius: 22px; flex-direction: column; justify-content: center; align-items: center; padding: 25px; z-index: 10; box-sizing: border-box; border: 2px solid #10b981; }
-        .reset-btn { background: none; color: #475569; font-size: 10px; border: 1px solid #334155; margin-top: 20px; padding: 5px 10px; border-radius: 6px; }
-    </style>
-</head>
-<body>
-
-<div class="card" id="app-card" style="display: none;">
-    <div id="overlay">
-        <h3 style="color: #10b981;">🏆 ДЕНЬ ЗАВЕРШЕН!</h3>
-        <p id="congrats-text" style="font-style: italic; line-height: 1.5;"></p>
-        <button onclick="document.getElementById('overlay').style.display='none'" style="margin-top:20px; background:#10b981; color:white; width: 100%;">ВПЕРЁД!</button>
-    </div>
-
-    <div class="info">НЕДЕЛЯ <span id="week-num">1</span></div>
-    <div class="avatar"><img id="pic" src="lvl1.png" onerror="this.src='https://via.placeholder.com/160?text=Герой'"></div>
-    <h2 id="name-display">Загрузка...</h2>
-    <div class="info">XP: <span id="xp-val">0</span> / <span id="next-val">500</span></div>
-    <div class="bar-bg"><div id="bar-fill"></div></div>
-    
-    <div id="task-list"></div>
-
-    <button class="reset-btn" onclick="if(confirm('Сбросить прогресс?')) { localStorage.clear(); location.reload(); }">СБРОСИТЬ ВСЁ</button>
-</div>
-
-<div id="error-msg" style="text-align: center; padding: 20px;">Загрузка приложения... Если экран пустой, попробуй обновить страницу.</div>
-
 <script>
     (function() {
         try {
@@ -81,6 +32,12 @@
                 localStorage.setItem('rpg_last_date', today);
             }
 
+            function vibrate(pattern) {
+                if (navigator.vibrate) {
+                    navigator.vibrate(pattern);
+                }
+            }
+
             function render() {
                 const stage = [...levels].reverse().find(l => state.xp >= l.xp) || levels[0];
                 const nextStage = levels.find(l => l.xp > state.xp) || { xp: state.xp + 500 };
@@ -92,25 +49,48 @@
                 document.getElementById('next-val').innerText = nextStage.xp;
                 document.getElementById('bar-fill').style.width = Math.min(100, (state.xp / nextStage.xp) * 100) + '%';
                 
+                localStorage.setItem('rpg_weekly_v3', JSON.stringify(state));
+                localStorage.setItem('rpg_last_date', today);
+
                 const list = document.getElementById('task-list');
                 list.innerHTML = '';
                 tasks.forEach(t => {
                     const isDone = state.completedToday.includes(t.id);
                     const div = document.createElement('div');
                     div.className = 'task';
-                    div.innerHTML = `<span>${t.txt}</span><button ${isDone ? 'disabled' : ''}>${isDone ? '✓' : '+' + t.pts}</button>`;
-                    if (!isDone) div.querySelector('button').onclick = () => {
-                        state.xp += t.pts;
-                        state.completedToday.push(t.id);
-                        localStorage.setItem('rpg_weekly_v3', JSON.stringify(state));
-                        render();
-                        if (state.completedToday.length === tasks.length) {
-                            document.getElementById('congrats-text').innerText = quotes[Math.floor(Math.random() * quotes.length)];
-                            document.getElementById('overlay').style.display = 'flex';
-                        }
-                    };
+                    div.innerHTML = `
+                        <span>${t.txt}</span>
+                        <button class="${isDone ? 'btn-done' : 'btn-active'}">
+                            ${isDone ? '✓' : '+' + t.pts}
+                        </button>
+                    `;
+                    div.querySelector('button').onclick = () => toggleTask(t.id, t.pts);
                     list.appendChild(div);
                 });
+            }
+
+            function toggleTask(id, pts) {
+                const index = state.completedToday.indexOf(id);
+                if (index > -1) {
+                    // Отмена: короткая вибрация 30мс
+                    vibrate(30);
+                    state.xp -= pts;
+                    if (state.xp < 0) state.xp = 0;
+                    state.completedToday.splice(index, 1);
+                } else {
+                    // Выполнение: двойная вибрация (60мс вибро, 40мс пауза, 60мс вибро)
+                    vibrate([60, 40, 60]);
+                    state.xp += pts;
+                    state.completedToday.push(id);
+                    
+                    if (state.completedToday.length === tasks.length) {
+                        // ФИНАЛ ДНЯ: длинная вибрация 300мс
+                        setTimeout(() => vibrate(300), 500);
+                        document.getElementById('congrats-text').innerText = quotes[Math.floor(Math.random() * quotes.length)];
+                        document.getElementById('overlay').style.display = 'flex';
+                    }
+                }
+                render();
             }
 
             document.getElementById('error-msg').style.display = 'none';
@@ -122,5 +102,3 @@
         }
     })();
 </script>
-</body>
-</html>
