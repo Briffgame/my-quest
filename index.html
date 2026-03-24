@@ -3,31 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RPG Habit Tracker</title>
-    
-    <link rel="apple-touch-icon" href="icon.png">
-    <link rel="icon" type="image/png" href="icon.png">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪖</text></svg>">
-
+    <title>Avatar Awakening: Pro</title>
     <style>
         body { background: #0f172a; color: white; font-family: -apple-system, sans-serif; display: flex; justify-content: center; padding: 15px; margin: 0; min-height: 100vh; -webkit-user-select: none; user-select: none; }
         .card { background: #1e293b; padding: 20px; border-radius: 24px; width: 100%; max-width: 380px; text-align: center; border: 2px solid #38bdf8; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; box-sizing: border-box; }
-        .avatar { width: 150px; height: 150px; margin: 0 auto 15px; border-radius: 20px; overflow: hidden; background: #334155; border: 3px solid #38bdf8; display: flex; align-items: center; justify-content: center; }
+        .avatar { width: 140px; height: 140px; margin: 0 auto 10px; border-radius: 20px; overflow: hidden; background: #334155; border: 3px solid #38bdf8; display: flex; align-items: center; justify-content: center; }
         #pic { width: 100%; height: 100%; object-fit: cover; }
-        .bar-bg { background: #334155; height: 12px; border-radius: 6px; margin: 15px 0; overflow: hidden; }
+        .bar-bg { background: #334155; height: 12px; border-radius: 6px; margin: 10px 0; overflow: hidden; }
         #bar-fill { background: #38bdf8; height: 100%; width: 0%; transition: 0.8s ease; }
-        .task { background: #1e293b; padding: 14px; margin: 10px 0; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; text-align: left; }
-        button { border: none; padding: 12px 18px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        .task { background: #1e293b; padding: 12px; margin: 8px 0; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; text-align: left; font-size: 14px; }
+        button { border: none; padding: 10px 16px; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-active { background: #38bdf8; color: #0f172a; }
         .btn-done { background: #10b981; color: white; }
-        .info { font-size: 13px; color: #94a3b8; }
+        .btn-locked { background: #475569; color: #94a3b8; cursor: not-allowed; }
+        .info { font-size: 12px; color: #94a3b8; }
         h2 { margin: 5px 0; font-size: 18px; }
+        .workout-link { color: #38bdf8; text-decoration: underline; font-weight: bold; font-size: 13px; display: block; margin-top: 5px; cursor: pointer; }
         #overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.98); border-radius: 22px; flex-direction: column; justify-content: center; align-items: center; padding: 25px; z-index: 10; box-sizing: border-box; border: 2px solid #10b981; }
-        
-        .footer-controls { margin-top: 20px; border-top: 1px solid #334155; padding-top: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .day-nav { display: flex; justify-content: center; gap: 10px; }
-        .nav-btn { background: #334155; color: #94a3b8; font-size: 11px; padding: 8px 12px; border: 1px solid #475569; }
-        .reset-btn { background: none; color: #475569; font-size: 10px; border: 1px solid #334155; padding: 5px; border-radius: 6px; align-self: center; }
+        .nav-btn { background: #334155; color: #94a3b8; font-size: 10px; padding: 8px; border: 1px solid #475569; border-radius: 8px; flex: 1; }
     </style>
 </head>
 <body>
@@ -35,136 +28,188 @@
 <div class="card" id="main-app" style="display:none;">
     <div id="overlay">
         <h3 style="color: #10b981;">🏆 ДЕНЬ ЗАВЕРШЕН!</h3>
-        <p id="congrats-text" style="font-style: italic; line-height: 1.4;"></p>
+        <p id="congrats-text" style="font-style: italic; line-height: 1.4; font-size: 14px;"></p>
         <button onclick="document.getElementById('overlay').style.display='none'" class="btn-done" style="margin-top:20px; width: 100%;">ВПЕРЁД!</button>
     </div>
 
-    <div class="info">НЕДЕЛЯ <span id="week-num">1</span></div>
-    <div class="avatar"><img id="pic" src="lvl1.png" onerror="this.src='https://via.placeholder.com/150?text=Герой'"></div>
+    <div class="info">НЕДЕЛЯ: <span id="week-num">1</span></div>
+    <div class="avatar"><img id="pic" src="lvl1.png" onerror="this.src='https://via.placeholder.com/140?text=Герой'"></div>
     <h2 id="name-display">Загрузка...</h2>
     <div class="info">XP: <span id="xp-val">0</span> / <span id="next-val">500</span></div>
     <div class="bar-bg"><div id="bar-fill"></div></div>
     
     <div id="task-list"></div>
 
-    <div class="footer-controls">
-        <div class="day-nav">
-            <button class="nav-btn" onclick="prevDay()">⬅️ Пред. день</button>
-            <button class="nav-btn" onclick="nextDay()">➡️ След. день</button>
-        </div>
-        <button class="reset-btn" onclick="if(confirm('Сбросить весь прогресс?')) { localStorage.clear(); location.reload(); }">СБРОСИТЬ ВСЁ</button>
+    <div style="margin-top: 15px; display: flex; gap: 8px;">
+        <button class="nav-btn" onclick="prevDay()">⬅️ Пред. день</button>
+        <button class="nav-btn" onclick="nextDay()">➡️ След. день</button>
     </div>
+    <button onclick="if(confirm('Сбросить всё?')) { localStorage.clear(); location.reload(); }" style="background:none; color:#475569; font-size:9px; border:none; margin-top:10px;">СБРОСИТЬ ПРОГРЕСС</button>
 </div>
 
 <div id="loader" style="text-align: center; padding: 50px;">Загрузка системы...</div>
 
 <script>
     (function() {
-        try {
-            const levels = [
-                { xp: 0,    name: "Новичок (Неделя 1)", img: "lvl1.png", week: 1, target: 500 },
-                { xp: 500,  name: "Исследователь (Неделя 2)", img: "lvl2.png", week: 2, target: 1000 },
-                { xp: 1000, name: "Воин (Неделя 3)", img: "lvl3.png", week: 3, target: 1500 },
-                { xp: 1500, name: "Титан (Неделя 4)", img: "lvl4.png", week: 4, target: 2000 }
-            ];
+        const workouts = {
+            2: [
+                "https://rutube.ru/video/4a9748ec79b54e6a753b0502dee3a625/?r=wd", // Вс
+                "https://rutube.ru/video/4b7d6676d63d05119656dd1c913ff095/?r=wd", // Пн
+                "https://rutube.ru/video/33390e2ff957b052cb20be7db7c25818/?r=wd", // Вт
+                "https://rutube.ru/video/2ff77566f2b3b8db89a4fe4fcc7b235b/?r=wd", // Ср
+                "https://rutube.ru/video/43ce78cac9997a78edfeb76a3d237dd4/?r=wd", // Чт
+                "https://rutube.ru/video/be4b511f302ffa4a30b2604f5c5c21fe/?r=wd", // Пт
+                "https://rutube.ru/video/e2650080a3b5c3c0341cfa0eabd328bd/?r=wd"  // Сб
+            ],
+            3: [
+                "https://rutube.ru/video/fbf60a86198d942af17a9eed9f69f7ee/?r=wd", // Вс
+                "https://rutube.ru/video/74457be9069c1d450f6072e02b2cf330/?r=wd", // Пн
+                "https://rutube.ru/video/f0c00126cb8d2f233bca774eb6c293eb/?r=wd", // Вт
+                "https://rutube.ru/video/8b9f3cd620f98ddcd30d7ab487f2dd21/?r=wd", // Ср
+                "https://rutube.ru/video/f21344caecdbd89b106f33e392ca7309/?r=wd", // Чт
+                "https://rutube.ru/video/45cd4eb38b292cf97d58582ab89201ae/?r=wd", // Пт
+                "https://rutube.ru/video/b0de4eb534b2b0e0bf771e064cc6607f/?r=wd"  // Сб
+            ],
+            4: [
+                "https://rutube.ru/video/83b9936590a98ed935e6e8a5c64ae066/?r=wd", // Вс
+                "https://rutube.ru/video/4d39e2e9ec7a208274d2e569e0ef288c/?r=wd", // Пн
+                "https://rutube.ru/video/23288ec1d5eb66f10caf9456e5038cd1/?r=wd", // Вт
+                "https://rutube.ru/video/164106cce3c175fc622f8efa80187bb9/?r=wd", // Ср
+                "https://rutube.ru/video/d7c27ee8d3a5590de9c8fb89b12877cd/?r=wd", // Чт
+                "https://rutube.ru/video/c8359a63d8c1fde45af3381ce60c0b5e/?r=wd", // Пт
+                "https://rutube.ru/video/2633c430ff308e47fe326796b30af290/?r=wd"  // Сб
+            ]
+        };
 
-            const tasks = [
+        const levels = [
+            { xp: 0,    name: "Новичок (Неделя 1)", img: "lvl1.png", week: 1, target: 500 },
+            { xp: 500,  name: "Исследователь (Неделя 2)", img: "lvl2.png", week: 2, target: 1200 },
+            { xp: 1200, name: "Воин (Неделя 3)", img: "lvl3.png", week: 3, target: 2100 },
+            { xp: 2100, name: "Титан (Неделя 4)", img: "lvl4.png", week: 4, target: 3200 }
+        ];
+
+        let state = JSON.parse(localStorage.getItem('rpg_weekly_v3')) || { 
+            xp: 0, 
+            completedToday: [], 
+            yesterday: [], 
+            workoutUnlocked: false 
+        };
+
+        const today = new Date().toDateString();
+        const dayOfWeek = new Date().getDay(); // 0 - Вс, 1 - Пн...
+
+        if (localStorage.getItem('rpg_last_date') !== today) {
+            state.yesterday = [...state.completedToday];
+            state.completedToday = [];
+            state.workoutUnlocked = false; // Сбрасываем замок тренировки
+            localStorage.setItem('rpg_last_date', today);
+        }
+
+        function vibrate(p) { if(navigator.vibrate) navigator.vibrate(p); }
+
+        window.nextDay = function() {
+            if(confirm("Перейти в новый день?")) {
+                state.yesterday = [...state.completedToday];
+                state.completedToday = [];
+                state.workoutUnlocked = false;
+                render();
+            }
+        }
+
+        window.prevDay = function() {
+            if(state.yesterday.length > 0 && confirm("Вернуть вчерашние задачи?")) {
+                state.completedToday = [...state.yesterday];
+                render();
+            }
+        }
+
+        window.unlockWorkout = function(url) {
+            window.open(url, '_blank');
+            state.workoutUnlocked = true;
+            render();
+        }
+
+        function getTasks(week) {
+            let base = [
                 { id: 't1', txt: "💧 Вода перед едой", pts: 10 },
                 { id: 't2', txt: "🤸‍♂️ Разминка 5 мин", pts: 15 },
                 { id: 't3', txt: "🎧 Прогулка 15 мин", pts: 25 },
                 { id: 't4', txt: "🥗 Овощи в тарелке", pts: 20 }
             ];
-
-            const quotes = [
-                "Саша, сегодня ты отыграл роль на 10/10!",
-                "Вьетнамский вайб всё ближе! Дисциплина — твой билет.",
-                "Твой контент на сегодня идеален. Зрители в восторге!",
-                "Легендарная работа! Ты на шаг ближе к 50к подписчиков.",
-                "Мастер церемоний в деле: сегодня ты управлял жизнью как профи!",
-                "Чистая победа! Оля точно оценит твою целеустремленность.",
-                "Уровень дисциплины: ТИТАН. Вьетнам ждет!"
-            ];
-
-            let state = JSON.parse(localStorage.getItem('rpg_weekly_v3')) || { xp: 0, completedToday: [], yesterday: [] };
             
-            // Авто-сброс по дате
-            const today = new Date().toDateString();
-            if (localStorage.getItem('rpg_last_date') !== today) {
-                state.yesterday = [...state.completedToday];
-                state.completedToday = [];
-                localStorage.setItem('rpg_last_date', today);
+            if (week >= 2) {
+                let workoutUrl = workouts[week] ? workouts[week][dayOfWeek] : "#";
+                base.push({ 
+                    id: 't_work', 
+                    txt: `🏋️‍♂️ Тренировка дня<br><span class="workout-link" onclick="unlockWorkout('${workoutUrl}')">СНАЧАЛА ПОСМОТРИ ВИДЕО</span>`, 
+                    pts: 30,
+                    locked: !state.workoutUnlocked 
+                });
             }
-
-            function vibrate(p) { if(navigator.vibrate) navigator.vibrate(p); }
-
-            window.nextDay = function() {
-                if(confirm("Перейти в новый день? Текущие задачи сбросятся.")) {
-                    vibrate([50, 50, 50]);
-                    state.yesterday = [...state.completedToday];
-                    state.completedToday = [];
-                    render();
-                }
+            if (week >= 3) {
+                base.push({ id: 't_script', txt: "📝 Сценарий / Работа над блогом", pts: 20 });
             }
-
-            window.prevDay = function() {
-                if(state.yesterday && state.yesterday.length > 0) {
-                    if(confirm("Вернуть вчерашние выполненные задачи?")) {
-                        vibrate(30);
-                        state.completedToday = [...state.yesterday];
-                        render();
-                    }
-                } else {
-                    alert("Нет данных о предыдущем дне.");
-                }
+            if (week >= 4) {
+                base.push({ id: 't_med', txt: "🧘‍♂️ Дыхание Титана (10 мин)", pts: 25 });
             }
+            return base;
+        }
 
-            function render() {
-                const stage = [...levels].reverse().find(l => state.xp >= l.xp) || levels[0];
-                const nextStage = levels.find(l => l.xp > state.xp) || { xp: state.xp + 500 };
+        function render() {
+            const stage = [...levels].reverse().find(l => state.xp >= l.xp) || levels[0];
+            const nextStage = levels.find(l => l.xp > state.xp) || { target: state.xp + 1000 };
+            const currentTasks = getTasks(stage.week);
+
+            document.getElementById('pic').src = stage.img;
+            document.getElementById('name-display').innerText = stage.name;
+            document.getElementById('week-num').innerText = stage.week;
+            document.getElementById('xp-val').innerText = state.xp;
+            document.getElementById('next-val').innerText = nextStage.target;
+            document.getElementById('bar-fill').style.width = Math.min(100, (state.xp / nextStage.target) * 100) + '%';
+            
+            localStorage.setItem('rpg_weekly_v3', JSON.stringify(state));
+
+            const list = document.getElementById('task-list');
+            list.innerHTML = '';
+            currentTasks.forEach(t => {
+                const isDone = state.completedToday.includes(t.id);
+                const isLocked = t.locked && !isDone;
                 
-                document.getElementById('pic').src = stage.img;
-                document.getElementById('name-display').innerText = stage.name;
-                document.getElementById('week-num').innerText = stage.week;
-                document.getElementById('xp-val').innerText = state.xp;
-                document.getElementById('next-val').innerText = nextStage.xp;
-                document.getElementById('bar-fill').style.width = Math.min(100, (state.xp / nextStage.xp) * 100) + '%';
+                const div = document.createElement('div');
+                div.className = 'task';
+                div.innerHTML = `
+                    <span>${t.txt}</span>
+                    <button class="${isDone ? 'btn-done' : (isLocked ? 'btn-locked' : 'btn-active')}" ${isLocked ? 'disabled' : ''}>
+                        ${isDone ? '✓' : '+' + t.pts}
+                    </button>
+                `;
                 
-                localStorage.setItem('rpg_weekly_v3', JSON.stringify(state));
-                localStorage.setItem('rpg_last_date', today);
-
-                const list = document.getElementById('task-list');
-                list.innerHTML = '';
-                tasks.forEach(t => {
-                    const isDone = state.completedToday.includes(t.id);
-                    const div = document.createElement('div');
-                    div.className = 'task';
-                    div.innerHTML = `<span>${t.txt}</span><button class="${isDone ? 'btn-done' : 'btn-active'}">${isDone ? '✓' : '+' + t.pts}</button>`;
+                if (!isLocked) {
                     div.querySelector('button').onclick = () => {
                         const idx = state.completedToday.indexOf(t.id);
                         if (idx > -1) {
-                            vibrate(30);
                             state.xp = Math.max(0, state.xp - t.pts);
                             state.completedToday.splice(idx, 1);
+                            vibrate(30);
                         } else {
-                            vibrate([60, 40, 60]);
                             state.xp += t.pts;
                             state.completedToday.push(t.id);
-                            if (state.completedToday.length === tasks.length) {
-                                setTimeout(() => vibrate(300), 500);
-                                document.getElementById('congrats-text').innerText = quotes[Math.floor(Math.random() * quotes.length)];
+                            vibrate([60, 40, 60]);
+                            if (state.completedToday.length === currentTasks.length) {
                                 document.getElementById('overlay').style.display = 'flex';
+                                document.getElementById('congrats-text').innerText = "Все цели достигнуты! Вьетнам ждёт Аватара.";
                             }
                         }
                         render();
                     };
-                    list.appendChild(div);
-                });
-            }
+                }
+                list.appendChild(div);
+            });
+        }
 
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('main-app').style.display = 'block';
-            render();
-        } catch (e) { document.getElementById('loader').innerText = "Ошибка: " + e.message; }
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('main-app').style.display = 'block';
+        render();
     })();
 </script>
 </body>
